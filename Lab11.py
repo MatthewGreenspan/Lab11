@@ -43,7 +43,7 @@ def main():
                         gradelist.append(int(grade))
 
                 print(f"Min: {min(gradelist):.0f}%")
-                print(f"Avg: {sum(gradelist) / len(gradelist):.0f}%")
+                print(f"Avg: {sum(gradelist) // len(gradelist):.0f}%")
                 print(f"Max: {max(gradelist):.0f}%")
 
             case "3":
