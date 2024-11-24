@@ -1,108 +1,62 @@
+import os
 import matplotlib.pyplot as plt
 
 
-def load_students(file_path):
-    students = {}
-    try:
-        with open(file_path, 'r') as f:
-            for line in f:
-                name, student_id = line.strip().split(',')
-                students[student_id] = name
-    except FileNotFoundError:
-        print(f"File not found: {file_path}")
-    return students
-
-
-def load_assignments(file_path):
-    assignments = {}
-    try:
-        with open(file_path, 'r') as f:
-            for line in f:
-                name, points, assignment_id = line.strip().split(',')
-                assignments[assignment_id] = (name, int(points))
-    except FileNotFoundError:
-        print(f"File not found: {file_path}")
-    return assignments
-
-
-def load_submissions(file_path):
-    submissions = []
-    try:
-        with open(file_path, 'r') as f:
-            for line in f:
-                student_id, assignment_id, percentage = line.strip().split(',')
-                submissions.append((student_id, assignment_id, float(percentage)))
-    except FileNotFoundError:
-        print(f"File not found: {file_path}")
-    return submissions
-
-
-def calculate_student_grade(student_id, submissions, assignments):
-    total_score = 0
-    max_score = 0
-    for student, assignment, percent in submissions:
-        if student == student_id:
-            total_score += (percent / 100) * assignments[assignment][1]
-            max_score += assignments[assignment][1]
-    return round((total_score / max_score) * 100) if max_score else None
-
-
-def assignment_statistics(assignment_id, submissions):
-    scores = [percent for _, aid, percent in submissions if aid == assignment_id]
-    if not scores:
-        return None
-    return min(scores), sum(scores) / len(scores), max(scores)
-
-
-def plot_histogram(assignment_id, submissions):
-    scores = [percent for _, aid, percent in submissions if aid == assignment_id]
-    if not scores:
-        return False
-    plt.hist(scores, bins=[0, 25, 50, 75, 100], edgecolor='black')
-    plt.title(f"Histogram for Assignment {assignment_id}")
-    plt.xlabel("Score (%)")
-    plt.ylabel("Frequency")
-    plt.show()
-    return True
-
-
 def main():
-    students = load_students("students.txt")
-    assignments = load_assignments("assignments.txt")
-    submissions = load_submissions("submissions.txt")
+        sub_dict = "data/submissions"
+        finalgrade = 0
+        gradelist = []
 
-    print("1. Student grade\n2. Assignment statistics\n3. Assignment graph")
-    choice = input("Enter your selection: ").strip()
+        with open("data/assignments.txt") as f:
+            assignments = f.read().splitlines()
 
-    if choice == "1":
-        name = input("What is the student's name: ").strip()
-        student_id = next((sid for sid, sname in students.items() if sname == name), None)
-        if not student_id:
-            print("Student not found")
-        else:
-            grade = calculate_student_grade(student_id, submissions, assignments)
-            print(f"{grade}%")
+        print("1. Student grade")
+        print("2. Assignment statistics")
+        print("3. Assignment graph\n")
 
-    elif choice == "2":
-        assignment_name = input("What is the assignment name: ").strip()
-        assignment_id = next((aid for aid, (aname, _) in assignments.items() if aname == assignment_name), None)
-        if not assignment_id:
-            print("Assignment not found")
-        else:
-            stats = assignment_statistics(assignment_id, submissions)
-            if stats:
-                print(f"Min: {stats[0]}%\nAvg: {stats[1]}%\nMax: {stats[2]}%")
-            else:
-                print("Assignment not found")
+        choice = input("Enter your selection: ")
+        match choice:
+            case "1":
+                name = input("What is the student's name: ")
+                with open("data/students.txt", "r") as f:
+                    for line in f:
+                        if line[3:].strip("\n") == name:
+                            id = line[0:3]
+                            break
 
-    elif choice == "3":
-        assignment_name = input("What is the assignment name: ").strip()
-        assignment_id = next((aid for aid, (aname, _) in assignments.items() if aname == assignment_name), None)
-        if not assignment_id:
-            print("Assignment not found")
-        else:
-            if not plot_histogram(assignment_id, submissions):
-                print("Assignment not found")
+                for file in os.listdir(sub_dict):
+                    with open(f"{sub_dict}/{file}") as f:
+                        line = f.readline().strip("\n")
+                    if line.startswith(id):
+                        _, assignmentnum, grade = line.split("|")
+                        points = int(assignments[assignments.index(assignmentnum) + 1])
+                        finalgrade += (points * (int(grade) / 100)) / 10
+                print(f"{finalgrade:.0f}%")
+
+            case "2":
+                assignment = input("What is the assignment name: ")
+                for file in os.listdir(sub_dict):
+                    with open(f"{sub_dict}/{file}") as f:
+                        line = f.readline().strip("\n")
+                    _, assignmentnum, grade = line.split("|")
+                    if assignmentnum == assignments[assignments.index(assignment) + 1]:
+                        gradelist.append(int(grade))
+
+                print(f"Min: {min(gradelist):.0f}%")
+                print(f"Avg: {sum(gradelist) / len(gradelist):.0f}%")
+                print(f"Max: {max(gradelist):.0f}%")
+
+            case "3":
+                assignment = input("What is the assignment name: ")
+                for file in os.listdir(sub_dict):
+                    with open(f"{sub_dict}/{file}") as f:
+                        line = f.readline().strip("\n")
+                    _, assignmentnum, grade = line.split("|")
+                    if assignmentnum == assignments[assignments.index(assignment) + 1]:
+                        gradelist.append(int(grade))
+
+                plt.hist(gradelist, bins=[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100])
+                plt.show()
 
 
 if __name__ == "__main__":
